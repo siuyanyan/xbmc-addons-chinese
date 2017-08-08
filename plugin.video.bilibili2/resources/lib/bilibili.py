@@ -11,7 +11,7 @@ import tempfile
 import random
 import xml.dom.minidom as minidom
 from cookielib import MozillaCookieJar
-import requests time
+import requests
 from bs4 import BeautifulSoup
 from bilibili_config import *
 
