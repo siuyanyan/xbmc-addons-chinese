@@ -11,7 +11,7 @@ import tempfile
 import random
 import xml.dom.minidom as minidom
 from cookielib import MozillaCookieJar
-import requests
+import requests time
 from bs4 import BeautifulSoup
 from bilibili_config import *
 
@@ -276,6 +276,58 @@ class Bilibili():
         url = ADD_HISTORY_URL.format(str(cid), str(aid))
         utils.get_page_content(url)
 
+#NNNNNNNNNNNNNNNNN
+    def get_live_area(self):
+        url = LIVE_ALL_URL
+        result = json.loads(utils.get_page_content(url))
+        return result['data']
+
+    def get_area_list(self, area):
+        url = LIVE_AREA_URL.format(area)
+        result = json.loads(utils.get_page_content(url))
+        return result['data']
+
+    def get_live_list(self, area, page):
+        url = LIVE_LIST_URL.format(area, page)
+        result = json.loads(utils.get_page_content(url))
+        pagesize = 30
+        if len(result['data']) < pagesize:
+            is_lastpage = 1
+        else:
+            is_lastpage = 0
+        return result['data'], is_lastpage
+
+    def get_live_recom_list(self, area):
+        url = LIVE_RECOM_URL.format(area)
+        result = json.loads(utils.get_page_content(url))
+        return result['data']
+
+    def get_live_newrecom_list(self, area, page):
+        url = LIVE_NEWRECOM_URL.format(area, page)
+        result = json.loads(utils.get_page_content(url))
+        return result['data']
+
+    def get_live_urls(self, roomid):
+        url = LIVE_STREAM_URL.format(roomid)
+        headers = {
+        #    'accept': "application/json, text/javascript, */*; q=0.01",
+        #    'origin': "http://live.bilibili.com",
+        #    'x-devtools-emulate-network-conditions-client-id': "b389a9fc-8387-4e26-8d7d-76bb698f17c1",
+            'user-agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.95 Safari/537.36",
+        #    'referer': "http://live.bilibili.com/96310",
+            'accept-encoding': "gzip, deflate, sdch",
+        #    'accept-language': "en,en-US;q=0.8,zh-CN;q=0.6,zh;q=0.4",
+            }
+        response = requests.request("GET", url)
+        soup = BeautifulSoup(response.text)
+        C = soup.durl
+        U = C.find_all(re.compile("url"))
+        o = []
+        for u in U:
+            o.append(u.string)
+        return o
+
+#NNNNNNNNNNNNNNNNNN
 
 if __name__ == '__main__':
     b = Bilibili()

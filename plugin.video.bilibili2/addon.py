@@ -56,7 +56,7 @@ def list_video(aid):
     items = []
     for  item in result:
         items.append({
-            'label': item['pagename'], 
+            'label': item['pagename'],
             'path': plugin.url_for('play', cid = item['cid']),
             'is_playable': True,
             })
@@ -94,7 +94,7 @@ def dynamic(page):
 @plugin.route('/fav_box/')
 def fav_box():
     items = [{
-        'label': item['name'], 
+        'label': item['name'],
         'path': plugin.url_for('fav', fav_box = item['fav_box'], page = '1')
         } for item in bilibili.get_fav_box()]
     if len(items) == 1:
@@ -155,7 +155,7 @@ def bangumi_chase(page):
     items = []
     for item in result:
         info = {
-            'plot': item['brief'],  
+            'plot': item['brief'],
             }
         title = item['title']
         if item['is_finish'] == 0:
@@ -195,7 +195,7 @@ def attention_video(mid, tid, page):
             pass
         items.append(get_av_item(item['aid'], label = item['title'], thumbnail = item['pic'], info = info))
     items += next_page('attention_video', page, total_page, mid = mid, tid = tid)
-    return items 
+    return items
 
 @plugin.route('/attention_channel_list/<mid>/<cid>/<page>/')
 def attention_channel_list(mid, cid, page):
@@ -214,7 +214,7 @@ def attention_channel_list(mid, cid, page):
             pass
         items.append(get_av_item(item['info']['aid'], label = item['info']['title'], thumbnail = item['info']['pic'], info = info))
     items += next_page('attention_channel_list', page, total_page, mid = mid, cid = cid)
-    return items 
+    return items
 
 @plugin.route('/attention_channel/<mid>/')
 def attention_channel(mid):
@@ -328,7 +328,7 @@ def category(tid):
 @plugin.route('/category_order/<tid>')
 def category_order(tid):
     items = [{
-        'label': item['title'], 
+        'label': item['title'],
         'path': plugin.url_for('category_list', page = '1', order = item['value'], tid = tid, days = item['days'])
         } for item in bilibili.get_order()]
     return items
@@ -358,11 +358,123 @@ def category_list(order, tid, page, days):
     items += next_page('category_list', page, total_page, order = order, tid = tid, days = days)
     return items
 
+#NNNNNNNNNNNNNNNN
+@plugin.route('/live_all/')
+def live_all():
+#    import web_pdb; web_pdb.set_trace()
+    items = []
+    area_name = {'sing-dance': u'唱见舞见',
+                'ent-life': u'生活娱乐',
+                'draw': u'绘画专区',
+                'otaku': u'御宅文化',
+                'single': u'单机联机',
+                'online': u'网络游戏',
+                'e-sports': u'电子竞技',
+                'mobile-game': u'手游直播',
+                'movie': u'放映厅',
+                }
+    for area,data in bilibili.get_live_area().items():
+        try:
+            label = area_name[area]
+            path = plugin.url_for('live_area', area = area)
+            info = {'Tag': data['tagList'],
+                    'duration': data['count'],}
+            items.append({'label': label, 'path': path, 'info': info, 'label2': str(data['count'])})
+        except:
+            pass
+    return items
+
+@plugin.route('/live_area/<area>/')
+def live_area(area):
+#    import web_pdb; web_pdb.set_trace()
+    items = []
+    result = bilibili.get_area_list(area)
+    info = {'plot': result['tag']}
+    items.append({'label': u"专区列表",
+                'path': plugin.url_for('live_list', area = area, page = '1'),
+                'info': info,
+                })
+    items.append({'label': u"专区推荐",
+                'path': plugin.url_for('live_recom', area = area, data = result['recom']),
+                'info': info,
+                })
+    items.append({'label': u"新人主播",
+                'path': plugin.url_for('live_new_recom', area = area, data = result['new_recom'], page = '1'),
+                'info': info,
+                })
+    return items
+
+@plugin.route('/<area>/live_list/<page>/')
+def live_list(area, page):
+#    import web_pdb; web_pdb.set_trace()
+    plugin.set_content('videos')
+    result, is_lastpage = bilibili.get_live_list(area, page)
+    items = []
+    for item in result:
+        items.append({
+            'label': item['title'],
+            'path': plugin.url_for('play_live', roomid = item['roomid']),
+            'thumbnail': item['cover'],
+            'info': u'主播id{}'.format(item['uname']),
+            'is_playable': True,
+            })
+    if is_lastpage == 0:
+        items += [{'label': u'第{}页 - 下一页'.format(page),
+                    'path': plugin.url_for('live_list', area = area, page = str(int(page)+1))}]
+    else:
+        pass
+    return items
+
+@plugin.route('/<area>/live_recom/')
+def live_recom(area):
+#    import web_pdb; web_pdb.set_trace()
+    plugin.set_content('videos')
+    result = bilibili.get_live_recom_list(area)
+    items = []
+    for item in result:
+        items.append({
+            'label': u'{} - {}'.format(item['areaName'],item['title']),
+            'path': plugin.url_for('play_live', roomid = item['roomid']),
+            'thumbnail': item['cover'],
+            'info': u'主播id{}'.format(item['uname']),
+            'is_playable': True,
+            })
+    items += [{'label': u'刷新',
+                'path': plugin.url_for('live_recom', area = area)}]
+    return items
+
+@plugin.route('/<area>/live_new_recom/<page>/')
+def live_new_recom(area, page):
+#    import web_pdb; web_pdb.set_trace()
+    plugin.set_content('videos')
+    result = bilibili.get_live_newrecom_list(area, page)
+    items = []
+    for item in result:
+        items.append({
+            'label': u'{} - {}'.format(item['areaName'],item['title']),
+            'path': plugin.url_for('play_live', roomid = item['roomid']),
+            'thumbnail': item['cover'],
+            'info': u'主播id{}'.format(item['uname']),
+            'is_playable': True,
+            })
+    items += [{'label': u'刷新',
+                'path': plugin.url_for('live_new_recom', area = area, page = str(int(page)+1))}]
+    return items
+
+@plugin.route('/play_live/<roomid>/')
+def play_live(roomid):
+#    import web_pdb; web_pdb.set_trace()
+    urls = bilibili.get_live_urls(roomid)
+    plugin.set_resolved_url(urls[0])
+
+#NNNNNNNNNNNNNNNN
+
 @plugin.route('/')
 def root():
     items = [
         #{'label': u'搜索(暂不支持)', 'path': plugin.url_for('search')},
         {'label': u'视频分类', 'path': plugin.url_for('category', tid = '0')},
+        {'label': u'直播', 'path': plugin.url_for('live_all')},
     ]
     if bilibili.is_login:
         items += [
